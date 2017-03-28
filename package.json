@@ -1,0 +1,16 @@
+{
+  "name": "dicelang",
+  "version": "0.0.0",
+  "description": "JavaScript interpreter of the Roll20 dice language",
+  "main": "dist/index.js",
+  "author": "Brandon Yue",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IrisAmp/dicelang.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IrisAmp/dicelang/issues"
+  },
+  "homepage": "https://github.com/IrisAmp/dicelang#readme"
+}
