@@ -3,8 +3,13 @@
   "version": "0.0.0",
   "description": "JavaScript interpreter of the Roll20 dice language",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "author": "Brandon Yue",
   "license": "MIT",
+  "scripts": {
+    "build": "tslint -c ./tslint.json src/**/*.ts && tsc",
+    "test": "jasmine"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/IrisAmp/dicelang.git"
@@ -12,5 +17,11 @@
   "bugs": {
     "url": "https://github.com/IrisAmp/dicelang/issues"
   },
-  "homepage": "https://github.com/IrisAmp/dicelang#readme"
+  "homepage": "https://github.com/IrisAmp/dicelang#readme",
+  "devDependencies": {
+    "@types/jasmine": "^2.5.46",
+    "jasmine": "^2.5.3",
+    "tslint": "^4.5.1",
+    "typescript": "^2.2.2"
+  }
 }
