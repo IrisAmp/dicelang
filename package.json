@@ -20,8 +20,12 @@
   "homepage": "https://github.com/IrisAmp/dicelang#readme",
   "devDependencies": {
     "@types/jasmine": "^2.5.46",
+    "@types/node": "^7.0.12",
     "jasmine": "^2.5.3",
     "tslint": "^4.5.1",
     "typescript": "^2.2.2"
+  },
+  "dependencies": {
+    "get-random-values": "^1.2.0"
   }
 }
