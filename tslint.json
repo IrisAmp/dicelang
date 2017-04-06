@@ -1,9 +1,10 @@
 {
-  "extends": [
-    "tslint:latest"
-  ],
-  "rules": {
-    "quotemark": [ "single" ],
-    "variable-name": [ true, "allow-leading-underscore" ]
-  }
+    "extends": [
+        "tslint:latest"
+    ],
+    "rules": {
+        "quotemark": ["single"],
+        "max-classes-per-file": [false],
+        "variable-name": [true, "allow-leading-underscore"]
+    }
 }
