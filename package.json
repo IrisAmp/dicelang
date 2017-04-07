@@ -8,6 +8,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tslint -c ./tslint.json src/**/*.ts && tsc",
+    "clean": "rimraf dist doc",
+    "doc": "typedoc --out ./doc --module commonjs --target ES5 --excludePrivate --excludeNotExported --exclude **/*.spec.* ./src",
     "test": "jasmine"
   },
   "repository": {
@@ -22,7 +24,9 @@
     "@types/jasmine": "^2.5.46",
     "@types/node": "^7.0.12",
     "jasmine": "^2.5.3",
+    "rimraf": "^2.6.1",
     "tslint": "^4.5.1",
+    "typedoc": "^0.5.10",
     "typescript": "^2.2.2"
   },
   "dependencies": {
