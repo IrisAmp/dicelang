@@ -60,8 +60,8 @@ export class Dice {
    * Perform a simple dice roll.
    * @param {number} d The number of faces the dice should have.
    * @param {number} n The number of dice to roll. Defaults to 1 if not given.
-   * @throws If the value of n is not between 1 and Dice.maxN inclusive.
-   * @throws If the value of d is not between 1 and Dice.maxD inclusive.
+   * @throws If the value of n is not between 0 and Dice.maxN inclusive.
+   * @throws If the value of d is not between 0 and Dice.maxD inclusive.
    */
   public static roll(d: number, n?: number): number[] {
     Dice.checkD(d);
@@ -77,24 +77,19 @@ export class Dice {
     return result;
   }
 
-  public static fromExpression(expression: string): Dice[] {
-    const result: Dice[] = [];
-    return result;
-  }
-
   protected static get diceRegExp(): RegExp {
     return /^(\d+)?d(f|\d+)(.*)$/i;
   }
 
   private static checkD(d: number) {
     if (d < 1 || d > Dice.maxD) {
-      throw new Error(`The value of n must be between 1 and ${Dice.maxD} (got ${d})`);
+      throw new Error(`The value of n must be between 0 and ${Dice.maxD} inclusive (got ${d})`);
     }
   }
 
   private static checkN(n: number) {
     if (n < 1 || n > Dice.maxN) {
-      throw new Error(`The value of n must be between 1 and ${Dice.maxN} (got ${n})`);
+      throw new Error(`The value of n must be between 0 and ${Dice.maxN} inclusive (got ${n})`);
     }
   }
 
@@ -112,8 +107,8 @@ export class Dice {
    * from. If not given, the dice is initialized as "1d20".
    * @param {?object} binding An object to bind to if the expression includes
    * bindings.
-   * @throws If the value of n is not between 1 and Dice.maxN inclusive.
-   * @throws If the value of d is not between 1 and Dice.maxD inclusive.
+   * @throws If the value of n is not between 0 and Dice.maxN inclusive.
+   * @throws If the value of d is not between 0 and Dice.maxD inclusive.
    */
   public constructor(diceExpr?: string, binding?: object) {
     if (!diceExpr) {
@@ -161,7 +156,7 @@ export class Dice {
 
   /**
    * Set the value of n.
-   * @throws If the value of n is not between 1 and Dice.maxN inclusive.
+   * @throws If the value of n is not between 0 and Dice.maxN inclusive.
    */
   public set n(value: number) {
     value = Math.round(value);
@@ -184,7 +179,7 @@ export class Dice {
   /**
    * Set the value of d. If the dice is a fate dice, the fate attribute is
    * cleared.
-   * @throws If the value of d is not between 1 and Dice.maxD inclusive.
+   * @throws If the value of d is not between 0 and Dice.maxD inclusive.
    */
   public set d(value: number) {
     value = Math.round(value);
@@ -227,7 +222,7 @@ export class Dice {
    * @param {?number} n The number of dice to roll. If not supplied, defaults to
    * the value of n given when the dice was constructed.
    * @returns {number} The combined result of the dice roll.
-   * @throws If the value of n is not between 1 and Dice.maxN inclusive.
+   * @throws If the value of n is not between 0 and Dice.maxN inclusive.
    */
   public roll(n: number = this.n): number {
     Dice.checkN(n);
