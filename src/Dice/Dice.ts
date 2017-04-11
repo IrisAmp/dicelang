@@ -1,9 +1,57 @@
 import { getRandomInt } from '../Common/Random';
 
 export class DiceMod {
-  protected static get modRegExpr(): RegExp {
-    return /./i;
+  protected static get successesModRegExpr(): RegExp {
+    return /([\<\=\>])(\d+)(?:f([\<\=\>])?(\d+))?/i;
   }
+
+  protected static get explodeModRegExpr(): RegExp {
+    return /(![!p]?)([\<\=\>])?(\d+)/i;
+  }
+
+  protected static get keepDropModRegExp(): RegExp {
+    return /([kd])([lh])?(\d+)/i;
+  }
+
+  protected static get rerollModRegExp(): RegExp {
+    return /(ro?)([\<\=\>])(\d+)/i;
+  }
+
+  protected static get sortModRegExp(): RegExp {
+    return /s([ad])?/i;
+  }
+
+  private _successes: {
+    cp: '<' | '=' | '>';
+    n: number;
+  };
+  private _failures: {
+    cp: '<' | '=' | '>';
+    n: number;
+  };
+  private _exploding: {
+    cp: '<' | '=' | '>';
+    n: number;
+  };
+  private _compounding: {
+    cp: '<' | '=' | '>';
+    n: number;
+  };
+  private _penetrating: {
+    cp: '<' | '=' | '>';
+    n: number;
+  };
+  private _keepDrop: {
+    kd: 'k' | 'd';
+    side: 'l' | 'h';
+    n: number;
+  };
+  private _reroll: {
+    o: boolean;
+  };
+  private _sort: {
+    direction: 'a' | 'd';
+  };
 
   public constructor(modExpr?: string) {
     //
@@ -223,6 +271,11 @@ export class Dice {
    * the value of n given when the dice was constructed.
    * @returns {number} The combined result of the dice roll.
    * @throws If the value of n is not between 0 and Dice.maxN inclusive.
+   * @throws It is possible for certain types of roll modifiers to continue
+   * rolling infinitely. Instead of crashing we throw an error describing where
+   * we stopped prematurely. The value of the rolls that we did execute can
+   * still be accessed via the rolls property, and the result can still be
+   * accessed via the result property.
    */
   public roll(n: number = this.n): number {
     Dice.checkN(n);
