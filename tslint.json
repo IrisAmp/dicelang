@@ -3,8 +3,10 @@
         "tslint:latest"
     ],
     "rules": {
-        "quotemark": ["single"],
         "max-classes-per-file": [false],
+        "max-line-length": [false],
+        "no-conditional-assignment": false,
+        "quotemark": ["single"],
         "variable-name": [true, "allow-leading-underscore"]
     }
 }

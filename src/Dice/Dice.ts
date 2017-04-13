@@ -1,3 +1,4 @@
+import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
 import { getRandomInt } from '../Common/Random';
 
 export class DiceMod {
@@ -6,7 +7,7 @@ export class DiceMod {
   }
 
   protected static get explodeModRegExpr(): RegExp {
-    return /(![!p]?)([\<\=\>])?(\d+)/i;
+    return /(![!p]?)(?:([\<\=\>])?(\d+)|(?![\<\=\>]))/i;
   }
 
   protected static get keepDropModRegExp(): RegExp {
@@ -24,37 +25,51 @@ export class DiceMod {
   private _successes: {
     cp: '<' | '=' | '>';
     n: number;
-  };
+  } = null;
   private _failures: {
     cp: '<' | '=' | '>';
     n: number;
-  };
+  } = null;
   private _exploding: {
     cp: '<' | '=' | '>';
     n: number;
-  };
+  } = null;
   private _compounding: {
     cp: '<' | '=' | '>';
     n: number;
-  };
+  } = null;
   private _penetrating: {
     cp: '<' | '=' | '>';
     n: number;
-  };
+  } = null;
   private _keepDrop: {
     kd: 'k' | 'd';
     side: 'l' | 'h';
     n: number;
-  };
+  } = null;
   private _reroll: {
+    cp: '<' | '=' | '>';
     o: boolean;
-  };
+    n: number;
+  } = null;
   private _sort: {
     direction: 'a' | 'd';
-  };
+  } = null;
 
   public constructor(modExpr?: string) {
-    //
+    const originalExpr = modExpr;
+    let result: RegExpExecArray;
+
+    // Check for exploding, compounding and penetrating.
+    const explodeRegExp = DiceMod.explodeModRegExpr;
+    while (result = explodeRegExp.exec(modExpr)) {
+      this.parseExplodeResult(result);
+      modExpr = modExpr.replace(result[0], '');
+    }
+
+    if (modExpr && modExpr.length > 0) {
+      throw new Error(`${originalExpr} is not a valid modifier: "${modExpr}" could not be parsed.`);
+    }
   }
 
   /**
@@ -79,8 +94,84 @@ export class DiceMod {
     return result.reduce((acc, val) => acc + val, 0);
   }
 
+  public get successes(): string {
+    return this._successes === null ? '' : ``;
+  }
+
+  public get failures(): string {
+    return this._failures === null ? '' : ``;
+  }
+
+  public get exploding(): string {
+    return this._exploding === null ? '' : `!${this._exploding.n === null ? '' : `${this._exploding.cp}${this._exploding.n}`}`;
+  }
+
+  public get compounding(): string {
+    return this._compounding === null ? '' : `!!${this._compounding.n === null ? '' : `${this._compounding.cp}${this._compounding.n}`}`;
+  }
+
+  public get penetrating(): string {
+    return this._penetrating === null ? '' : `!p${this._penetrating.n === null ? '' : `${this._penetrating.cp}${this._penetrating.n}`}`;
+  }
+
+  public get keepDrop(): string {
+    return this._keepDrop === null ? '' : ``;
+  }
+
+  public get reroll(): string {
+    return this._reroll === null ? '' : ``;
+  }
+
+  public get sort(): string {
+    return this._sort === null ? '' : ``;
+  }
+
+  /**
+   * The combined value of the modifier as a string. The order of tokens is:
+   * - Penetrating
+   * - Compounding
+   * - Exploding
+   * - Keep/Drop
+   * - Reroll
+   * - Successes
+   * - Failures
+   * - Sorting
+   * @returns {string}
+   */
   public toString(): string {
-    return ``;
+    return `${this.penetrating}${this.compounding}${this.exploding}${this.keepDrop}${this.reroll}${this.successes}${this.failures}${this.sort}`;
+  }
+
+  private parseExplodeResult(result?: RegExpExecArray): void {
+    const n = result[3] === undefined ? null : parseInt(result[3], 10);
+    const cp = result[2] as any || '=';
+    const parsed = { cp, n };
+    switch (result[1]) {
+      case '!':
+        // Exploding
+        if (this._exploding !== null) {
+          throw new Error(`Exploding already set as "${this.exploding}" but parsed "${result[0]}" as well.`);
+        }
+        this._exploding = parsed;
+        break;
+      case '!!':
+        // Compounding
+        if (this._compounding !== null) {
+          throw new Error(`Compounding already set as "${this.compounding}" but parsed "${result[0]}" as well.`);
+        }
+        this._compounding = parsed;
+        break;
+      case '!p':
+        // Penetrating
+        if (this._penetrating !== null) {
+          throw new Error(`Penetrating already set as "${this.penetrating}" but parsed "${result[0]}" as well.`);
+        }
+        this._penetrating = parsed;
+        break;
+      default:
+        // This shouldn't be possible.
+        throw new Error(`explodeModRegExp should only match "!", "!!", or "!p" but it matched "${result[1]}".`);
+    }
   }
 }
 
@@ -89,11 +180,11 @@ export class DiceMod {
  */
 export class Dice {
   /**
-   * The maximum allowed value of d, which is equal to the maximum value of a
-   * UInt32 (4294967295).
+   * The maximum allowed value of d, which is equal to the largest representable
+   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
    */
   public static get maxD(): number {
-    return 4294967295;
+    return MAX_JS_INT;
   }
 
   /**
@@ -101,7 +192,7 @@ export class Dice {
    * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
    */
   public static get maxN(): number {
-    return 9007199254740991;
+    return MAX_JS_INT;
   }
 
   /**
@@ -126,17 +217,17 @@ export class Dice {
   }
 
   protected static get diceRegExp(): RegExp {
-    return /^(\d+)?d(f|\d+)(.*)$/i;
+    return /^(\d+)?d(f|\d+)(.*)$/ig;
   }
 
   private static checkD(d: number) {
-    if (d < 1 || d > Dice.maxD) {
+    if (d < 0 || d > Dice.maxD) {
       throw new Error(`The value of n must be between 0 and ${Dice.maxD} inclusive (got ${d})`);
     }
   }
 
   private static checkN(n: number) {
-    if (n < 1 || n > Dice.maxN) {
+    if (n < 0 || n > Dice.maxN) {
       throw new Error(`The value of n must be between 0 and ${Dice.maxN} inclusive (got ${n})`);
     }
   }
@@ -182,7 +273,7 @@ export class Dice {
       }
 
       // Parse the value of d.
-      if (parseResult[2] === 'f') {
+      if (parseResult[2] === 'f' || parseResult[2] === 'F') {
         // Use the fate setter.
         this.fate = true;
       } else {

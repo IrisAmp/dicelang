@@ -5,11 +5,11 @@ import { IExpression } from '../Common/IExpression';
  * @param {string} input
  * @returns {IExpression}
  */
-export function tokenize(input: string): IExpression {
+export function tokenize(input: string, openParenChar = '(', closeParenChar = ')'): IExpression {
   const result: IExpression = [];
 
-  const firstOpenParen = input.indexOf('(');
-  const firstCloseParen = input.indexOf(')');
+  const firstOpenParen = input.indexOf(openParenChar);
+  const firstCloseParen = input.indexOf(closeParenChar);
 
   if (firstOpenParen < 0 && firstCloseParen < 0) {
     // There are no paren
@@ -29,9 +29,9 @@ export function tokenize(input: string): IExpression {
   let matchingParen = firstOpenParen;
   while (parenStack.length > 0 && matchingParen < input.length) {
     ++matchingParen;
-    if (input.charAt(matchingParen) === '(') {
+    if (input.charAt(matchingParen) === openParenChar) {
       parenStack.push(matchingParen);
-    } else if (input.charAt(matchingParen) === ')') {
+    } else if (input.charAt(matchingParen) === closeParenChar) {
       parenStack.pop();
     }
   }
