@@ -56,6 +56,6 @@ export function getRandomInt(min: number, max: number): number {
   } else if (max < min) {
     return 0;
   } else {
-    return Math.floor(getRandomNumber() * (max - min)) + min + 1;
+    return Math.floor(getRandomNumber() * (max - min + 1)) + min;
   }
 }

@@ -66,7 +66,8 @@ export class Dice {
   private _fate: boolean = false;
   private _mod: DiceMod;
   private _binding: any;
-  private _rolls: number[];
+  private _result: number;
+  private _rolls: number[] = [];
 
   /**
    * Create a new dice from the given atomic expression.
@@ -205,7 +206,12 @@ export class Dice {
       this._rolls.push(roll);
       this._mod.rolled(roll, rolls, this);
     }
-    return this._mod.modResult(rolls);
+    this._result = this._mod.modResult(rolls);
+    return this.result;
+  }
+
+  public get result(): number {
+    return this._result;
   }
 
   /**
@@ -218,5 +224,9 @@ export class Dice {
 
   public toString(): string {
     return `${this._n}d${this._fate ? 'F' : this._d}${this._mod.toString()}`;
+  }
+
+  public toStringPlaintext(): string {
+    return `Roll ${this._n} ${this._fate ? 'fate dice' : `d${this._d}${this._n > 1 ? 's' : ''}`}. ${this._mod.toStringPlaintext()}`;
   }
 }

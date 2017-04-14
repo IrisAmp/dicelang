@@ -1,6 +1,19 @@
 import { Dice } from './Dice';
 
 export class DiceMod {
+  public static comparePointToString(cp: '<' | '>' | '='): string {
+    switch (cp) {
+      case '<':
+        return 'less than or equal to';
+      case '>':
+        return 'greater than or equal to';
+      case '=':
+        return 'equal to';
+      default:
+        throw new Error(`A compare point must be "<", ">", or "=", but got "${cp}".`);
+    }
+  }
+
   protected static get successesModRegExpr(): RegExp {
     return /([\<\=\>])(\d+)(?:f([\<\=\>])?(\d+))?/i;
   }
@@ -14,7 +27,7 @@ export class DiceMod {
   }
 
   protected static get rerollModRegExp(): RegExp {
-    return /(ro?)([\<\=\>])(\d+)/i;
+    return /r(o)?(?:([\<\=\>])?(\d+)|(?![\<\=\>]))/i;
   }
 
   protected static get sortModRegExp(): RegExp {
@@ -43,16 +56,16 @@ export class DiceMod {
   } = null;
   private _keepDrop: {
     kd: 'k' | 'd';
-    side: 'l' | 'h';
+    lh: 'l' | 'h';
     n: number;
   } = null;
-  private _reroll: {
+  private _reroll: Array<{
     cp: '<' | '=' | '>';
     o: boolean;
     n: number;
-  } = null;
+  }> = [];
   private _sort: {
-    direction: 'a' | 'd';
+    ad: 'a' | 'd';
   } = null;
 
   public constructor(modExpr?: string) {
@@ -66,8 +79,29 @@ export class DiceMod {
       modExpr = modExpr.replace(result[0], '');
     }
 
+    // Check for keep/drop
+    const keepDropRegExp = DiceMod.keepDropModRegExp;
+    while (result = keepDropRegExp.exec(modExpr)) {
+      this.parseKeepDropResult(result);
+      modExpr = modExpr.replace(result[0], '');
+    }
+
+    // Check for rerolls
+    const rerollRegExp = DiceMod.rerollModRegExp;
+    while (result = rerollRegExp.exec(modExpr)) {
+      this.parseRerollResult(result);
+      modExpr = modExpr.replace(result[0], '');
+    }
+
+    // Check for sorting
+    const sortRegExp = DiceMod.sortModRegExp;
+    while (result = sortRegExp.exec(modExpr)) {
+      this.parseSortResult(result);
+      modExpr = modExpr.replace(result[0], '');
+    }
+
     if (modExpr && modExpr.length > 0) {
-      throw new Error(`${originalExpr} is not a valid modifier: "${modExpr}" could not be parsed.`);
+      throw new Error(`"${originalExpr}" is not a valid modifier: "${modExpr}" could not be parsed.`);
     }
   }
 
@@ -97,48 +131,118 @@ export class DiceMod {
     return this._successes === null ? '' : ``;
   }
 
+  public get successesPlaintext(): string {
+    return this._successes === null ? `` : ``;
+  }
+
   public get failures(): string {
     return this._failures === null ? '' : ``;
+  }
+
+  public get failuresPlaintext(): string {
+    return this._failures === null ? `` : ``;
   }
 
   public get exploding(): string {
     return this._exploding === null ? '' : `!${this._exploding.n === null ? '' : `${this._exploding.cp}${this._exploding.n}`}`;
   }
 
+  public get explodingPlaintext(): string {
+    if (this._exploding === null) {
+      return '';
+    }
+    let explodeOn: string;
+    if (this._exploding.n === null) {
+      explodeOn = 'the maximum value';
+    } else {
+      explodeOn = `rolls ${DiceMod.comparePointToString(this._exploding.cp)} ${this._exploding.n}`;
+    }
+    return this._exploding === null ? `` : `Explode on ${explodeOn}.`;
+  }
+
   public get compounding(): string {
     return this._compounding === null ? '' : `!!${this._compounding.n === null ? '' : `${this._compounding.cp}${this._compounding.n}`}`;
+  }
+
+  public get compoundingPlaintext(): string {
+    if (this._compounding === null) {
+      return '';
+    }
+    let explodeOn: string;
+    if (this._compounding.n === null) {
+      explodeOn = 'the maximum value';
+    } else {
+      explodeOn = `rolls ${DiceMod.comparePointToString(this._compounding.cp)} ${this._compounding.n}`;
+    }
+    return this._compounding === null ? `` : `Compound on ${explodeOn}.`;
   }
 
   public get penetrating(): string {
     return this._penetrating === null ? '' : `!p${this._penetrating.n === null ? '' : `${this._penetrating.cp}${this._penetrating.n}`}`;
   }
 
+  public get penetratingPlaintext(): string {
+    if (this._penetrating === null) {
+      return '';
+    }
+    let explodeOn: string;
+    if (this._penetrating.n === null) {
+      explodeOn = 'the maximum value';
+    } else {
+      explodeOn = `rolls ${DiceMod.comparePointToString(this._penetrating.cp)} ${this._penetrating.n}`;
+    }
+    return this._penetrating === null ? `` : `Penetrate on ${explodeOn}.`;
+  }
+
   public get keepDrop(): string {
-    return this._keepDrop === null ? '' : ``;
+    return this._keepDrop === null ? '' : `${this._keepDrop.kd}${this._keepDrop.lh}${this._keepDrop.n}`;
+  }
+
+  public get keepDropPlaintext(): string {
+    return this._keepDrop === null ? `` : `${this._keepDrop.kd === 'k' ? 'Keep' : 'Drop'} the ${this._keepDrop.lh === 'l' ? 'lowest' : 'highest'} ${this._keepDrop.n} roll${this._keepDrop.n > 1 ? 's' : ''}.`;
   }
 
   public get reroll(): string {
-    return this._reroll === null ? '' : ``;
+    return this._reroll.length < 1 ? '' : this._reroll.map((x) => `r${x.o ? 'o' : ''}${x.n === null ? `` : `${x.cp}${x.n}`}`).join(``);
+  }
+
+  public get rerollPlaintext(): string {
+    let rerolls: any[];
+    rerolls = this._reroll.map((x) => `${x.n === null ? 'the lowest value' : `values ${DiceMod.comparePointToString(x.cp)} ${x.n}`}${x.o ? ` only once` : ``}`);
+    if (rerolls.length > 1) {
+      rerolls[rerolls.length - 1] = `and ${rerolls[rerolls.length - 1]}`;
+    }
+    return this._reroll.length === 0 ? `` : `Reroll on ${rerolls.join(', ')}.`;
   }
 
   public get sort(): string {
-    return this._sort === null ? '' : ``;
+    return this._sort === null ? '' : `s${this._sort.ad}`;
+  }
+
+  public get sortPlaintext(): string {
+    return this._sort === null ? `` : `Sort ${this._sort.ad === 'a' ? 'ascending' : 'descending'}.`;
   }
 
   /**
-   * The combined value of the modifier as a string. The order of tokens is:
-   * - Penetrating
-   * - Compounding
-   * - Exploding
-   * - Keep/Drop
-   * - Reroll
-   * - Successes
-   * - Failures
-   * - Sorting
+   * The combined value of the modifier as a string.
    * @returns {string}
    */
   public toString(): string {
     return `${this.penetrating}${this.compounding}${this.exploding}${this.keepDrop}${this.reroll}${this.successes}${this.failures}${this.sort}`;
+  }
+
+  public toStringPlaintext(): string {
+    let mods = [
+      this.penetratingPlaintext,
+      this.compoundingPlaintext,
+      this.explodingPlaintext,
+      this.keepDropPlaintext,
+      this.rerollPlaintext,
+      this.successesPlaintext,
+      this.failuresPlaintext,
+      this.sortPlaintext,
+    ];
+    return `${mods.join(' ')}`;
   }
 
   private parseExplodeResult(result?: RegExpExecArray): void {
@@ -171,5 +275,33 @@ export class DiceMod {
         // This shouldn't be possible.
         throw new Error(`explodeModRegExp should only match "!", "!!", or "!p" but it matched "${result[1]}".`);
     }
+  }
+
+  private parseKeepDropResult(result?: RegExpExecArray): void {
+    if (this._keepDrop !== null) {
+      throw new Error(`Keep/Drop already set as "${this.keepDrop}" but parsed "${result[0]}" as well.`);
+    }
+    const kd: any = result[1];
+    const lh: any = result[2] || (result[1] === 'k' ? 'h' : 'l');
+    const n = parseInt(result[3], 10);
+    this._keepDrop = { kd, lh, n };
+  }
+
+  private parseRerollResult(result?: RegExpExecArray): void {
+    const o = result[1] !== undefined;
+    const cp: any = result[2] === undefined ? '=' : result[2];
+    const n = result[3] === undefined ? null : parseInt(result[3], 10);
+    if (this._reroll.filter((x) => x.cp === cp && x.n === n).length > 0) {
+      throw new Error(`Reroll on "${cp}${n}" is already set but parsed "${result[0]}" as well.`);
+    }
+    this._reroll.push({ o, cp, n });
+  }
+
+  private parseSortResult(result?: RegExpExecArray): void {
+    if (this._sort !== null) {
+      throw new Error(`Sort already set as "${this.sort}" but parsed "${result[0]}" as well.`);
+    }
+    const ad: any = result[1] || 'a';
+    this._sort = { ad };
   }
 }
