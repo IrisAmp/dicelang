@@ -1,0 +1,36 @@
+{
+  "name": "dicelang-example",
+  "version": "0.0.0",
+  "description": "The dicelang library example.",
+  "private": true,
+  "main": "index.js",
+  "author": "Brandon Yue",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IrisAmp/dicelang.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IrisAmp/dicelang/issues"
+  },
+  "homepage": "https://github.com/IrisAmp/dicelang#readme",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "buildw": "webpack --config webpack.config.js --watch",
+    "start": "webpack-dev-server"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.5.46",
+    "@types/node": "^7.0.12",
+    "source-map-loader": "^0.2.1",
+    "ts-loader": "^2.0.3",
+    "webpack": "^2.4.1",
+    "webpack-dev-server": "^2.4.2"
+  },
+  "dependencies": {
+    "@types/react": "^15.0.21",
+    "@types/react-dom": "^0.14.23",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4"
+  }
+}
