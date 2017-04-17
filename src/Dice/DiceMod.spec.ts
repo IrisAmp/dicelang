@@ -7,7 +7,6 @@ describe('DiceMod', () => {
 
       d = new DiceMod();
       expect(d.successes).toEqual('', 'successes should not be parsed on undefined input');
-      expect(d.failures).toEqual('', 'failures should not be parsed on undefined input');
       expect(d.exploding).toEqual('', 'exploding should not be parsed on undefined input');
       expect(d.compounding).toEqual('', 'compounding should not be parsed on undefined input');
       expect(d.penetrating).toEqual('', 'penetrating should not be parsed on undefined input');
@@ -17,7 +16,6 @@ describe('DiceMod', () => {
 
       d = new DiceMod('');
       expect(d.successes).toEqual('', 'successes should not be parsed on empty input.');
-      expect(d.failures).toEqual('', 'failures should not be parsed on empty input.');
       expect(d.exploding).toEqual('', 'exploding should not be parsed on empty input.');
       expect(d.compounding).toEqual('', 'compounding should not be parsed on empty input.');
       expect(d.penetrating).toEqual('', 'penetrating should not be parsed on empty input.');

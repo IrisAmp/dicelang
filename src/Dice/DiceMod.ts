@@ -1,3 +1,4 @@
+import { MAX_JS_INT } from '../Common/Constants';
 import { Dice } from './Dice';
 
 export class DiceMod {
@@ -12,6 +13,28 @@ export class DiceMod {
       default:
         throw new Error(`A compare point must be "<", ">", or "=", but got "${cp}".`);
     }
+  }
+
+  public static comparePoint(cp: '<' | '>' | '=', n: number, value: number): boolean {
+    switch (cp) {
+      case '<':
+        return value <= n;
+      case '>':
+        return value >= n;
+      case '=':
+        return value === n;
+      default:
+        throw new Error(`A compare point must be "<", ">", or "=", but got "${cp}".`);
+    }
+  }
+
+  /**
+   * The maximum allowed value of n for a dice mod, which is equal to the
+   * largest representable integer in JavaScript (9007199254740991, or
+   * Number.MAX_SAFE_INTEGER in ES6).
+   */
+  public static get maxN(): number {
+    return MAX_JS_INT;
   }
 
   protected static get successesModRegExpr(): RegExp {
@@ -32,6 +55,20 @@ export class DiceMod {
 
   protected static get sortModRegExp(): RegExp {
     return /s([ad])?/i;
+  }
+
+  protected static sortAscComparator(a: number, b: number): number {
+    return a - b;
+  }
+
+  protected static sortDesComparator(a: number, b: number): number {
+    return b - a;
+  }
+
+  private static checkN(n: number) {
+    if (n < 0 || n > DiceMod.maxN) {
+      throw new Error(`The value of n must be between 0 and ${DiceMod.maxN} inclusive (got ${n})`);
+    }
   }
 
   private _successes: {
@@ -93,6 +130,13 @@ export class DiceMod {
       modExpr = modExpr.replace(result[0], '');
     }
 
+    // Check for successes/failures
+    const successesRegExp = DiceMod.successesModRegExpr;
+    while (result = successesRegExp.exec(modExpr)) {
+      this.parseSucessesResult(result);
+      modExpr = modExpr.replace(result[0], '');
+    }
+
     // Check for sorting
     const sortRegExp = DiceMod.sortModRegExp;
     while (result = sortRegExp.exec(modExpr)) {
@@ -124,23 +168,30 @@ export class DiceMod {
    * @returns {number} The combined total of the roll.
    */
   public modResult(result: number[]): number {
-    return result.reduce((acc, val) => acc + val, 0);
+    if (this._sort !== null) {
+      result.sort(this._sort.ad === 'a' ? DiceMod.sortAscComparator : DiceMod.sortDesComparator);
+    }
+    if (this._successes !== null) {
+      return result.reduce((acc, val) => {
+        if (DiceMod.comparePoint(this._successes.cp, this._successes.n, val)) {
+          ++acc;
+        }
+        if (this._failures !== null && DiceMod.comparePoint(this._failures.cp, this._failures.n, val)) {
+          --acc;
+        }
+        return acc;
+      }, 0);
+    } else {
+      return result.reduce((acc, val) => acc + val, 0);
+    }
   }
 
   public get successes(): string {
-    return this._successes === null ? '' : ``;
+    return this._successes === null ? '' : `${this._successes.cp}${this._successes.n}${this._failures === null ? '' : `f${this._failures.cp}${this._failures.n}`}`;
   }
 
   public get successesPlaintext(): string {
-    return this._successes === null ? `` : ``;
-  }
-
-  public get failures(): string {
-    return this._failures === null ? '' : ``;
-  }
-
-  public get failuresPlaintext(): string {
-    return this._failures === null ? `` : ``;
+    return this._successes === null ? `` : `Count rolls ${DiceMod.comparePointToString(this._successes.cp)} ${this._successes.n}${this._failures === null ? '' : ` minus rolls ${DiceMod.comparePointToString(this._failures.cp)} ${this._failures.n}`} as successes.`;
   }
 
   public get exploding(): string {
@@ -228,25 +279,25 @@ export class DiceMod {
    * @returns {string}
    */
   public toString(): string {
-    return `${this.penetrating}${this.compounding}${this.exploding}${this.keepDrop}${this.reroll}${this.successes}${this.failures}${this.sort}`;
+    return `${this.penetrating}${this.compounding}${this.exploding}${this.keepDrop}${this.reroll}${this.successes}${this.sort}`;
   }
 
   public toStringPlaintext(): string {
-    let mods = [
+    const mods = [
       this.penetratingPlaintext,
       this.compoundingPlaintext,
       this.explodingPlaintext,
       this.keepDropPlaintext,
       this.rerollPlaintext,
       this.successesPlaintext,
-      this.failuresPlaintext,
       this.sortPlaintext,
     ];
     return `${mods.join(' ')}`;
   }
 
-  private parseExplodeResult(result?: RegExpExecArray): void {
+  private parseExplodeResult(result: RegExpExecArray): void {
     const n = result[3] === undefined ? null : parseInt(result[3], 10);
+    DiceMod.checkN(n);
     const cp = result[2] as any || '=';
     const parsed = { cp, n };
     switch (result[1]) {
@@ -277,27 +328,51 @@ export class DiceMod {
     }
   }
 
-  private parseKeepDropResult(result?: RegExpExecArray): void {
+  private parseKeepDropResult(result: RegExpExecArray): void {
     if (this._keepDrop !== null) {
       throw new Error(`Keep/Drop already set as "${this.keepDrop}" but parsed "${result[0]}" as well.`);
     }
+    const n = parseInt(result[3], 10);
+    DiceMod.checkN(n);
     const kd: any = result[1];
     const lh: any = result[2] || (result[1] === 'k' ? 'h' : 'l');
-    const n = parseInt(result[3], 10);
     this._keepDrop = { kd, lh, n };
   }
 
-  private parseRerollResult(result?: RegExpExecArray): void {
+  private parseRerollResult(result: RegExpExecArray): void {
+    const n = result[3] === undefined ? null : parseInt(result[3], 10);
+    DiceMod.checkN(n);
     const o = result[1] !== undefined;
     const cp: any = result[2] === undefined ? '=' : result[2];
-    const n = result[3] === undefined ? null : parseInt(result[3], 10);
     if (this._reroll.filter((x) => x.cp === cp && x.n === n).length > 0) {
       throw new Error(`Reroll on "${cp}${n}" is already set but parsed "${result[0]}" as well.`);
     }
     this._reroll.push({ o, cp, n });
   }
 
-  private parseSortResult(result?: RegExpExecArray): void {
+  private parseSucessesResult(result: RegExpExecArray): void {
+    if (this._successes !== null) {
+      throw new Error(`Successes/failures already set as "${this.successes}" but parsed "${result[0]}" as well.`);
+    }
+    const sn = parseInt(result[2], 10);
+    DiceMod.checkN(sn);
+    const scp = result[1] as any || '=';
+    if (result[3] && result[4]) {
+      const fn = parseInt(result[4], 10);
+      DiceMod.checkN(fn);
+      const fcp = result[3] as any || '=';
+      this._failures = {
+        cp: fcp,
+        n: fn,
+      };
+    }
+    this._successes = {
+      cp: scp,
+      n: sn,
+    };
+  }
+
+  private parseSortResult(result: RegExpExecArray): void {
     if (this._sort !== null) {
       throw new Error(`Sort already set as "${this.sort}" but parsed "${result[0]}" as well.`);
     }

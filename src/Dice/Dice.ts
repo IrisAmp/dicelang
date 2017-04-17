@@ -17,7 +17,8 @@ export class Dice {
 
   /**
    * The maximum allowed value of n, which is equal to the largest representable
-   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
+   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER in
+   * ES6).
    */
   public static get maxN(): number {
     return MAX_JS_INT;
@@ -68,6 +69,7 @@ export class Dice {
   private _binding: any;
   private _result: number;
   private _rolls: number[] = [];
+  private _rawRolls: number[] = [];
 
   /**
    * Create a new dice from the given atomic expression.
@@ -201,12 +203,14 @@ export class Dice {
     Dice.checkN(n);
     const rolls = [];
     this._rolls.length = 0;
+    this._rawRolls.length = 0;
     for (let i = 0; i < n; ++i) {
       const roll = getRandomInt(this._minRoll, this._d);
-      this._rolls.push(roll);
+      this._rawRolls.push(roll);
       this._mod.rolled(roll, rolls, this);
     }
     this._result = this._mod.modResult(rolls);
+    this._rolls = rolls;
     return this.result;
   }
 
