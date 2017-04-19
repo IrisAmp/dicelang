@@ -157,7 +157,10 @@ export class DiceMod {
    * @param {Dice} dice The dice that was used to roll the value.
    */
   public rolled(roll: number, result: number[], dice: Dice): void {
-    result.push(roll);
+    const rolls: number[] = [roll];
+    this.applyECP(rolls, dice);
+    this.applyReroll(rolls, dice);
+    this.applyKeepDrop(rolls, result);
   }
 
   /**
@@ -378,5 +381,26 @@ export class DiceMod {
     }
     const ad: any = result[1] || 'a';
     this._sort = { ad };
+  }
+
+  private applyECP(rolls: number[], dice: Dice) {
+    // TODO
+  }
+
+  private applyReroll(rolls: number[], dice: Dice): void {
+    // TODO
+  }
+
+  private applyKeepDrop(rolls: number[], result: number[]): void {
+    if (this._keepDrop !== null) {
+      rolls.forEach((r) => {
+        if (true /* TODO */) {
+          result.push(r);
+        }
+      });
+    } else {
+      // There is no K/D modifier, just add everything.
+      rolls.forEach((r) => result.push(r));
+    }
   }
 }
