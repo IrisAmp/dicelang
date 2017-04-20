@@ -6,34 +6,30 @@ import * as ReactDOM from 'react-dom';
 interface IAppState {
   dice: Dice;
   error: string;
-  lastResult: number;
-  rolls: number[];
+  normalizedSpec: string;
+  description: string;
+  lastTotal: number;
+  lastRolls: string;
+  lastRollsBeforeMods: string;
 }
 
 class App extends React.Component<any, IAppState> {
   public constructor(props, context) {
     super(props, context);
 
+    const dice = new Dice();
     this.state = {
-      dice: new Dice(),
+      description: dice.toStringPlaintext(),
+      dice,
       error: null,
-      lastResult: null,
-      rolls: [],
+      lastRolls: null,
+      lastRollsBeforeMods: null,
+      lastTotal: null,
+      normalizedSpec: dice.toString(),
     };
   }
 
   public render() {
-    let diceBreakdown;
-
-    if (this.state.dice !== null) {
-      diceBreakdown = (
-        <div>
-          <code style={{ paddingLeft: 2 }}>{this.state.dice.toString()}</code>
-          <p>{this.state.dice.toStringPlaintext()}</p>
-        </div>
-      );
-    }
-
     return (
       <div style={{ margin: '2em', maxWidth: '100%', wordWrap: 'break-word' }}>
         <div>
@@ -44,9 +40,20 @@ class App extends React.Component<any, IAppState> {
             onChange={(e) => this.handleChange(e)} />
           <button onClick={() => this.roll()}>Roll!</button>
         </div>
-        <div>{this.state.error}</div>
-        <div>{diceBreakdown}</div>
-        <div><h3>{this.state.lastResult}</h3><code>[{this.state.rolls.join()}]</code></div>
+        <div>
+          <h3 style={{ fontFamily: 'sans-serif' }}>Normalized Spec</h3>
+          <p><code>{this.state.normalizedSpec || 'n/a'}</code></p>
+          <h3 style={{ fontFamily: 'sans-serif' }}>Description</h3>
+          <p><code>{this.state.description || 'n/a'}</code></p>
+          <h3 style={{ fontFamily: 'sans-serif' }}>Last Total</h3>
+          <p><code>{this.state.lastTotal || 'n/a'}</code></p>
+          <h3 style={{ fontFamily: 'sans-serif' }}>Last Rolls</h3>
+          <p><code>{this.state.lastRolls || 'n/a'}</code></p>
+          <h3 style={{ fontFamily: 'sans-serif' }}>Last Rolls Before Mods</h3>
+          <p><code>{this.state.lastRollsBeforeMods || 'n/a'}</code></p>
+          <h3 style={{ fontFamily: 'sans-serif' }}>Errors</h3>
+          <p><code>{this.state.error || 'n/a'}</code></p>
+        </div>
       </div>
     );
   }
@@ -55,14 +62,18 @@ class App extends React.Component<any, IAppState> {
     try {
       const newDice = new Dice(event.target.value);
       this.setState({
+        description: newDice.toStringPlaintext(),
         dice: newDice,
         error: null,
+        normalizedSpec: newDice.toString(),
       });
     } catch (e) {
       console.error(e);
       this.setState({
+        description: null,
         dice: null,
         error: e.message,
+        normalizedSpec: null,
       });
     }
   }
@@ -75,19 +86,21 @@ class App extends React.Component<any, IAppState> {
 
   private roll() {
     if (this.state.dice) {
-      this.state.dice.roll();
       try {
+        this.state.dice.roll();
         this.setState({
           error: null,
-          lastResult: this.state.dice.result,
-          rolls: this.state.dice.rolls,
+          lastRolls: this.state.dice.rolls.join(', '),
+          lastRollsBeforeMods: this.state.dice.rawRolls.join(', '),
+          lastTotal: this.state.dice.result,
         });
       } catch (e) {
         console.error(e);
         this.setState({
           error: e.message,
-          lastResult: null,
-          rolls: null,
+          lastRolls: null,
+          lastRollsBeforeMods: null,
+          lastTotal: null,
         });
       }
     }

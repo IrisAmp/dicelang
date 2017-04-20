@@ -218,12 +218,12 @@ export class Dice {
     return this._result;
   }
 
-  /**
-   * The raw values of the last dice roll, before they were modified using this
-   * Dice's DiceMod.
-   */
   public get rolls(): number[] {
     return this._rolls.slice();
+  }
+
+  public get rawRolls(): number[] {
+    return this._rawRolls.slice();
   }
 
   public toString(): string {

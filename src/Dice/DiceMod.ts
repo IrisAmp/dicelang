@@ -1,4 +1,4 @@
-import { MAX_JS_INT } from '../Common/Constants';
+import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
 import { Dice } from './Dice';
 
 export class DiceMod {
@@ -159,8 +159,7 @@ export class DiceMod {
   public rolled(roll: number, result: number[], dice: Dice): void {
     const rolls: number[] = [roll];
     this.applyECP(rolls, dice);
-    this.applyReroll(rolls, dice);
-    this.applyKeepDrop(rolls, result);
+    rolls.forEach((r) => result.push(r));
   }
 
   /**
@@ -171,6 +170,8 @@ export class DiceMod {
    * @returns {number} The combined total of the roll.
    */
   public modResult(result: number[]): number {
+    // TODO: Sorting applied twice if there is a kd clause.
+    this.applyKeepDrop(result);
     if (this._sort !== null) {
       result.sort(this._sort.ad === 'a' ? DiceMod.sortAscComparator : DiceMod.sortDesComparator);
     }
@@ -360,7 +361,7 @@ export class DiceMod {
     const sn = parseInt(result[2], 10);
     DiceMod.checkN(sn);
     const scp = result[1] as any || '=';
-    if (result[3] && result[4]) {
+    if (result[4]) {
       const fn = parseInt(result[4], 10);
       DiceMod.checkN(fn);
       const fcp = result[3] as any || '=';
@@ -384,23 +385,83 @@ export class DiceMod {
   }
 
   private applyECP(rolls: number[], dice: Dice) {
-    // TODO
+    const queue: number[] = [];
+    rolls.forEach((roll, index) => {
+      queue.push(roll);
+      const compoundedValue = this.applyCompounding(roll, dice);
+      rolls[index] = compoundedValue;
+    });
+    const shouldExplode = (value: number): boolean => {
+      return this._exploding !== null && DiceMod.comparePoint(this._exploding.cp, this._exploding.n === null ? dice.d : this._exploding.n, value);
+    };
+    const shouldPenetrate = (value: number): boolean => {
+      return this._penetrating !== null && DiceMod.comparePoint(this._penetrating.cp, this._penetrating.n === null ? dice.d : this._penetrating.n, value);
+    };
+
+    let roll: number;
+    while (queue.length > 0) {
+      if (rolls.length >= MAX_UINT_32) {
+        throw new Error('Exceeded maximum number of rolls while applying E/C/P modifiers.');
+      }
+      roll = queue.pop();
+      if (shouldExplode(roll)) {
+        const newValue = Dice.roll(dice.d)[0];
+        const compoundedValue = this.applyCompounding(newValue, dice);
+        rolls.push(compoundedValue);
+        queue.push(newValue);
+      }
+      if (shouldPenetrate(roll)) {
+        const newValue = Dice.roll(dice.d)[0];
+        const compoundedValue = this.applyCompounding(newValue, dice);
+        rolls.push(compoundedValue - 1);
+        queue.push(newValue);
+      }
+    }
   }
 
-  private applyReroll(rolls: number[], dice: Dice): void {
-    // TODO
+  private shouldReroll(roll: number): { o?: boolean, v: boolean } {
+    this._reroll.forEach((reroll) => {
+      if (DiceMod.comparePoint(reroll.cp, reroll.n, roll)) {
+        return { v: true, o: reroll.o };
+      }
+    });
+    return { v: false };
   }
 
-  private applyKeepDrop(rolls: number[], result: number[]): void {
+  private applyCompounding(roll: number, dice: Dice): number {
+    const shouldCompound = (value: number): boolean => {
+      return this._compounding !== null && DiceMod.comparePoint(this._compounding.cp, this._compounding.n === null ? dice.d : this._compounding.n, value);
+    };
+    let compoundRoll: number = roll;
+    while (shouldCompound(compoundRoll)) {
+      if (roll >= MAX_JS_INT) {
+        throw new Error('Exceeded maximum roll value while applying Compounding modifier.');
+      }
+      compoundRoll = Dice.roll(dice.d)[0];
+      roll += compoundRoll;
+    }
+    return roll;
+  }
+
+  private applyKeepDrop(result: number[]): void {
     if (this._keepDrop !== null) {
-      rolls.forEach((r) => {
-        if (true /* TODO */) {
-          result.push(r);
-        }
-      });
-    } else {
-      // There is no K/D modifier, just add everything.
-      rolls.forEach((r) => result.push(r));
+      result.sort(DiceMod.sortAscComparator);
+      switch (`${this._keepDrop.kd}${this._keepDrop.lh}`) {
+        case 'kh':
+          result.splice(0, result.length - this._keepDrop.n);
+          break;
+        case 'kl':
+          result.splice(this._keepDrop.n);
+          break;
+        case 'dh':
+          result.splice(result.length - this._keepDrop.n);
+          break;
+        case 'dl':
+          result.splice(0, this._keepDrop.n);
+          break;
+        default:
+          throw new Error(`Keep/Drop may be one of "kh", "kl", "dh" or "dl", but got "${this._keepDrop.kd}${this._keepDrop.lh}".`);
+      }
     }
   }
 }
