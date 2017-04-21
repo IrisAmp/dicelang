@@ -3,10 +3,23 @@ import { getRandomInt } from '../Common/Random';
 
 import { DiceMod } from './DiceMod';
 
+export interface IDice {
+  n: number;
+  d: number;
+  fate: boolean;
+  minRoll: number;
+  result: number;
+  rolls: number[];
+  rawRolls: number[];
+  roll(n?: number): number;
+  toString(): string;
+  toStringPlaintext(): string;
+}
+
 /**
  * Representation of a dice roll.
  */
-export class Dice {
+export class Dice implements IDice {
   /**
    * The maximum allowed value of d, which is equal to the largest representable
    * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
@@ -184,6 +197,10 @@ export class Dice {
         this._minRoll = 1;
       }
     }
+  }
+
+  public get minRoll(): number {
+    return this._minRoll;
   }
 
   /**
