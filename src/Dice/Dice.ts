@@ -1,25 +1,14 @@
 import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
-import { getRandomInt } from '../Common/Random';
+import { RandomDevice } from '../Common/Random';
 
 import { DiceMod } from './DiceMod';
 
-export interface IDice {
-  n: number;
-  d: number;
-  fate: boolean;
-  minRoll: number;
-  result: number;
-  rolls: number[];
-  rawRolls: number[];
-  roll(n?: number): number;
-  toString(): string;
-  toStringPlaintext(): string;
-}
+const RD = new RandomDevice();
 
 /**
  * Representation of a dice roll.
  */
-export class Dice implements IDice {
+export class Dice {
   /**
    * The maximum allowed value of d, which is equal to the largest representable
    * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
@@ -53,7 +42,7 @@ export class Dice implements IDice {
 
     const result: number[] = [];
     for (let i = 0; i < n; ++i) {
-      result.push(getRandomInt(1, d));
+      result.push(RD.randomInt(d));
     }
     return result;
   }
@@ -222,7 +211,7 @@ export class Dice implements IDice {
     this._rolls.length = 0;
     this._rawRolls.length = 0;
     for (let i = 0; i < n; ++i) {
-      const roll = getRandomInt(this._minRoll, this._d);
+      const roll = RD.randomInt(this._d, this._minRoll);
       this._rawRolls.push(roll);
       this._mod.rolled(roll, rolls, this);
     }

@@ -2,6 +2,11 @@ import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
 import { Dice } from './Dice';
 
 export class DiceMod {
+  /**
+   * @param {'<' | '>' | '='} cp The compare point to translate.
+   * @returns {string} The english plaintext representation of the compare point.
+   * @throws {Error} If the cp param is not a compare point.
+   */
   public static comparePointToString(cp: '<' | '>' | '='): string {
     switch (cp) {
       case '<':
@@ -15,6 +20,19 @@ export class DiceMod {
     }
   }
 
+  /**
+   * @param {'<' | '>' | '='} cp The compare point to use.
+   * @param {number} n The numeric value of the compare point.
+   * @param {number} value The number to compare against the compare point.
+   * @returns {boolean} True if value "matches" the compare point.
+   * @throws {Error} Thrown if cp is not a compare point.
+   * @example
+   *  comparePoint('>', 3, 4); // => true
+   * @example
+   *  comparePoint('>', 3, 3); // => true
+   * @example
+   *  comparePoint('>', 3, 2); // => false
+   */
   public static comparePoint(cp: '<' | '>' | '=', n: number, value: number): boolean {
     switch (cp) {
       case '<':
@@ -37,30 +55,51 @@ export class DiceMod {
     return MAX_JS_INT;
   }
 
+  /**
+   * The RegExp used for parsing successes and failures.
+   */
   protected static get successesModRegExpr(): RegExp {
     return /([\<\=\>])(\d+)(?:f([\<\=\>])?(\d+))?/i;
   }
 
+  /**
+   * The RegExp used for parsing exploding, compounding, and penetrating.
+   */
   protected static get explodeModRegExpr(): RegExp {
     return /(![!p]?)(?:([\<\=\>])?(\d+)|(?![\<\=\>]))/i;
   }
 
+  /**
+   * The RegExp used for parsing keep/drop.
+   */
   protected static get keepDropModRegExp(): RegExp {
     return /([kd])([lh])?(\d+)/i;
   }
 
+  /**
+   * The RegExp used for parsing rerolls.
+   */
   protected static get rerollModRegExp(): RegExp {
     return /r(o)?(?:([\<\=\>])?(\d+)|(?![\<\=\>]))/i;
   }
 
+  /**
+   * The RegExp used for parsing sorting.
+   */
   protected static get sortModRegExp(): RegExp {
     return /s([ad])?/i;
   }
 
+  /**
+   * Compare function used to sort numbers ascending.
+   */
   protected static sortAscComparator(a: number, b: number): number {
     return a - b;
   }
 
+  /**
+   * Compare function used to sort numbers descending.
+   */
   protected static sortDesComparator(a: number, b: number): number {
     return b - a;
   }
@@ -105,8 +144,15 @@ export class DiceMod {
     ad: 'a' | 'd';
   } = null;
 
+  /**
+   * @param {string} modExpr The mod expression to create the DiceMod from.
+   * @throws {Error} Thrown when any part of modExpr cannot be parsed.
+   */
   public constructor(modExpr?: string) {
     const originalExpr = modExpr;
+    if (modExpr) {
+      modExpr = modExpr.trim();
+    }
     let result: RegExpExecArray;
 
     // Check for exploding, compounding and penetrating.
@@ -154,7 +200,7 @@ export class DiceMod {
    * place if necessary.
    * @param {number} roll The value that was just rolled.
    * @param {number[]} result The result object.
-   * @param {Dice} dice The dice that was used to roll the value.
+   * @param {IDice} dice The dice that was used to roll the value.
    */
   public rolled(roll: number, result: number[], dice: Dice): void {
     const rolls: number[] = this._applyHotModifiers(roll, dice);
@@ -172,18 +218,30 @@ export class DiceMod {
     return this._applySettledModifiers(result);
   }
 
+  /**
+   * The normalized string value for successes.
+   */
   public get successes(): string {
     return this._successes === null ? '' : `${this._successes.cp}${this._successes.n}${this._failures === null ? '' : `f${this._failures.cp}${this._failures.n}`}`;
   }
 
+  /**
+   * The plaintext string value for successes.
+   */
   public get successesPlaintext(): string {
     return this._successes === null ? `` : `Count rolls ${DiceMod.comparePointToString(this._successes.cp)} ${this._successes.n}${this._failures === null ? '' : ` minus rolls ${DiceMod.comparePointToString(this._failures.cp)} ${this._failures.n}`} as successes.`;
   }
 
+  /**
+   * The normalized string value for exploding.
+   */
   public get exploding(): string {
     return this._exploding === null ? '' : `!${this._exploding.n === null ? '' : `${this._exploding.cp}${this._exploding.n}`}`;
   }
 
+  /**
+   * The plaintext string value for exploding.
+   */
   public get explodingPlaintext(): string {
     if (this._exploding === null) {
       return '';
@@ -197,10 +255,16 @@ export class DiceMod {
     return this._exploding === null ? `` : `Explode on ${explodeOn}.`;
   }
 
+  /**
+   * The normalized string value for compounding.
+   */
   public get compounding(): string {
     return this._compounding === null ? '' : `!!${this._compounding.n === null ? '' : `${this._compounding.cp}${this._compounding.n}`}`;
   }
 
+  /**
+   * The plaintext string value for compounding.
+   */
   public get compoundingPlaintext(): string {
     if (this._compounding === null) {
       return '';
@@ -214,10 +278,16 @@ export class DiceMod {
     return this._compounding === null ? `` : `Compound on ${explodeOn}.`;
   }
 
+  /**
+   * The normalized string value for penetrating.
+   */
   public get penetrating(): string {
     return this._penetrating === null ? '' : `!p${this._penetrating.n === null ? '' : `${this._penetrating.cp}${this._penetrating.n}`}`;
   }
 
+  /**
+   * The plaintext string value for penetrating.
+   */
   public get penetratingPlaintext(): string {
     if (this._penetrating === null) {
       return '';
@@ -231,18 +301,30 @@ export class DiceMod {
     return this._penetrating === null ? `` : `Penetrate on ${explodeOn}.`;
   }
 
+  /**
+   * The normalized string value for keepDrop.
+   */
   public get keepDrop(): string {
     return this._keepDrop === null ? '' : `${this._keepDrop.kd}${this._keepDrop.lh}${this._keepDrop.n}`;
   }
 
+  /**
+   * The plaintext string value for keepDrop.
+   */
   public get keepDropPlaintext(): string {
     return this._keepDrop === null ? `` : `${this._keepDrop.kd === 'k' ? 'Keep' : 'Drop'} the ${this._keepDrop.lh === 'l' ? 'lowest' : 'highest'} ${this._keepDrop.n} roll${this._keepDrop.n > 1 ? 's' : ''}.`;
   }
 
+  /**
+   * The normalized string value for reroll.
+   */
   public get reroll(): string {
     return this._reroll.length < 1 ? '' : this._reroll.map((x) => `r${x.o ? 'o' : ''}${x.n === null ? `` : `${x.cp}${x.n}`}`).join(``);
   }
 
+  /**
+   * The plaintext string value for reroll.
+   */
   public get rerollPlaintext(): string {
     let rerolls: any[];
     rerolls = this._reroll.map((x) => `${x.n === null ? 'the lowest value' : `values ${DiceMod.comparePointToString(x.cp)} ${x.n}`}${x.o ? ` only once` : ``}`);
@@ -252,10 +334,16 @@ export class DiceMod {
     return this._reroll.length === 0 ? `` : `Reroll on ${rerolls.join(', ')}.`;
   }
 
+  /**
+   * The normalized string value for sort.
+   */
   public get sort(): string {
     return this._sort === null ? '' : `s${this._sort.ad}`;
   }
 
+  /**
+   * The plaintext string value for sort.
+   */
   public get sortPlaintext(): string {
     return this._sort === null ? `` : `Sort ${this._sort.ad === 'a' ? 'ascending' : 'descending'}.`;
   }
@@ -268,6 +356,10 @@ export class DiceMod {
     return `${this.penetrating}${this.compounding}${this.exploding}${this.keepDrop}${this.reroll}${this.successes}${this.sort}`;
   }
 
+  /**
+   * The combined plaintext value of the modifier.
+   * @returns {string}
+   */
   public toStringPlaintext(): string {
     const mods = [
       this.penetratingPlaintext,
@@ -281,7 +373,7 @@ export class DiceMod {
     return `${mods.join(' ')}`;
   }
 
-  protected _parseExplodeResult(result: RegExpExecArray): void {
+  private _parseExplodeResult(result: RegExpExecArray): void {
     const n = result[3] === undefined ? null : parseInt(result[3], 10);
     DiceMod.checkN(n);
     const cp = result[2] as any || '=';
@@ -314,7 +406,7 @@ export class DiceMod {
     }
   }
 
-  protected _parseKeepDropResult(result: RegExpExecArray): void {
+  private _parseKeepDropResult(result: RegExpExecArray): void {
     if (this._keepDrop !== null) {
       throw new Error(`Keep/Drop already set as "${this.keepDrop}" but parsed "${result[0]}" as well.`);
     }
@@ -325,7 +417,7 @@ export class DiceMod {
     this._keepDrop = { kd, lh, n };
   }
 
-  protected _parseRerollResult(result: RegExpExecArray): void {
+  private _parseRerollResult(result: RegExpExecArray): void {
     const n = result[3] === undefined ? null : parseInt(result[3], 10);
     DiceMod.checkN(n);
     const o = result[1] !== undefined;
@@ -336,7 +428,7 @@ export class DiceMod {
     this._reroll.push({ o, cp, n });
   }
 
-  protected _parseSucessesResult(result: RegExpExecArray): void {
+  private _parseSucessesResult(result: RegExpExecArray): void {
     if (this._successes !== null) {
       throw new Error(`Successes/failures already set as "${this.successes}" but parsed "${result[0]}" as well.`);
     }
@@ -358,7 +450,7 @@ export class DiceMod {
     };
   }
 
-  protected _parseSortResult(result: RegExpExecArray): void {
+  private _parseSortResult(result: RegExpExecArray): void {
     if (this._sort !== null) {
       throw new Error(`Sort already set as "${this.sort}" but parsed "${result[0]}" as well.`);
     }
@@ -366,7 +458,7 @@ export class DiceMod {
     this._sort = { ad };
   }
 
-  protected _applyHotModifiers(roll: number, dice: Dice): number[] {
+  private _applyHotModifiers(roll: number, dice: Dice): number[] {
     const queue: Array<{ value: number, rerolled?: boolean, penetrated?: boolean }> = [{ value: roll }];
     const result: number[] = [];
     const shouldExplode = (value: number): boolean => {
@@ -406,7 +498,7 @@ export class DiceMod {
     return result;
   }
 
-  protected _applySettledModifiers(result: number[]): number {
+  private _applySettledModifiers(result: number[]): number {
     this._applyKeepDrop(result);
     if (this._sort !== null) {
       result.sort(this._sort.ad === 'a' ? DiceMod.sortAscComparator : DiceMod.sortDesComparator);
@@ -426,7 +518,7 @@ export class DiceMod {
     }
   }
 
-  protected _applyCompounding(roll: number, dice: Dice): number {
+  private _applyCompounding(roll: number, dice: Dice): number {
     const shouldCompound = (value: number): boolean => {
       return this._compounding !== null && DiceMod.comparePoint(this._compounding.cp, this._compounding.n === null ? dice.d : this._compounding.n, value);
     };
@@ -441,7 +533,7 @@ export class DiceMod {
     return roll;
   }
 
-  protected _applyKeepDrop(result: number[]): void {
+  private _applyKeepDrop(result: number[]): void {
     if (this._keepDrop !== null) {
       result.sort(DiceMod.sortAscComparator);
       switch (`${this._keepDrop.kd}${this._keepDrop.lh}`) {
