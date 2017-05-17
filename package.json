@@ -1,6 +1,6 @@
 {
   "name": "dicelang",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "JavaScript interpreter of the Roll20 dice language",
   "files": [
     "dist",
@@ -13,11 +13,13 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "buildw": "tsc -w",
+    "build:w": "tsc -w",
+    "build:rel": "tsc -p ./tsconfig.release.json",
     "clean": "rimraf dist doc",
     "doc": "typedoc --out ./doc --module commonjs --target ES5 --excludePrivate --excludeNotExported --exclude **/*.spec.* ./src",
     "lint": "tslint -c ./tslint.json src/**/*.ts",
-    "test": "jasmine"
+    "test": "jasmine",
+    "prepublishOnly": "npm run clean && npm run doc && npm run build:rel"
   },
   "repository": {
     "type": "git",

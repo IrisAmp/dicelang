@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "dist",
+    "jsx": "react",
+    "outDir": "dist",
+    "removeComments": true,
+    "target": "es5"
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "./src/**/*.spec.*"
+  ]
+}
