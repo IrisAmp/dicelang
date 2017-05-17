@@ -50,6 +50,9 @@ export class Dice {
     return result;
   }
 
+  /**
+   * The RegExp used to parse the core dice expression.
+   */
   protected static get diceRegExp(): RegExp {
     return /^(\d+)?d(f|\d+)(.*)$/ig;
   }
@@ -73,7 +76,7 @@ export class Dice {
   private _fate: boolean = false;
   private _mod: DiceMod;
   private _binding: any;
-  private _result: number;
+  private _result: number = null;
   private _rolls: number[] = [];
   private _rawRolls: number[] = [];
 
@@ -196,6 +199,17 @@ export class Dice {
     }
   }
 
+  /**
+   * The modifiers for this dice.
+   */
+  public get mod(): DiceMod {
+    return this._mod;
+  }
+
+  /**
+   * The lowest numeric value that this dice can roll. This is usually 1, except
+   * in the case of fate dice, where it is -1.
+   */
   public get minRoll(): number {
     return this._minRoll;
   }
@@ -228,22 +242,39 @@ export class Dice {
     return this.result;
   }
 
+  /**
+   * The most recently rolled result, or null if the dice has never been rolled.
+   */
   public get result(): number {
     return this._result;
   }
 
+  /**
+   * An array of the individual dice values for the most recent roll.
+   */
   public get rolls(): number[] {
     return this._rolls.slice();
   }
 
+  /**
+   * An array of the individual dice values for the most recent roll before
+   * modifiers were applied.
+   */
   public get rawRolls(): number[] {
     return this._rawRolls.slice();
   }
 
+  /**
+   * @returns {string} The string representation of the Dice, using Roll20
+   * notation.
+   */
   public toString(): string {
     return `${this._n}d${this._fate ? 'F' : this._d}${this._mod.toString()}`;
   }
 
+  /**
+   * @returns {string} The string representation of the Dice, in English text.
+   */
   public toStringPlaintext(): string {
     return `Roll ${this._n} ${this._fate ? 'fate dice' : `d${this._d}${this._n > 1 ? 's' : ''}`}. ${this._mod.toStringPlaintext()}`;
   }

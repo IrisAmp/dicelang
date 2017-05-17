@@ -249,7 +249,8 @@ export class DiceMod {
   }
 
   /**
-   * 
+   * The raw properties for exploding, or null if this modifier does not have an
+   * exploding clause.
    */
   public get explodingProperties(): { cp: '<' | '=' | '>', n: number } {
     return this._exploding === null ? null : {
@@ -282,7 +283,8 @@ export class DiceMod {
   }
 
   /**
-   * 
+   * The raw properties for compounding, or null if this modifier does not have
+   * a compounding clause.
    */
   public get compoundingProperties(): { cp: '<' | '=' | '>', n: number } {
     return this._compounding === null ? null : {
@@ -315,7 +317,8 @@ export class DiceMod {
   }
 
   /**
-   * 
+   * The raw properties for penetrating, or null if this modifier does not have
+   * a penetrating clause.
    */
   public get penetratingProperties(): { cp: '<' | '=' | '>', n: number } {
     return this._penetrating === null ? null : {
@@ -348,7 +351,8 @@ export class DiceMod {
   }
 
   /**
-   * 
+   * The raw properties for keepDrop, or null if this modifier does not have a
+   * keepDrop clause.
    */
   public get keepDropProperties(): { kd: 'k' | 'd', lh: 'l' | 'h', n: number } {
     return this._keepDrop === null ? null : {
@@ -373,7 +377,8 @@ export class DiceMod {
   }
 
   /**
-   * 
+   * The raw properties for reroll, or null if this modifier does not have a
+   * reroll clause.
    */
   public get rerollProperties(): Array<{ cp: '<' | '=' | '>', o: boolean, n: number }> {
     const result: Array<{ cp: '<' | '=' | '>', o: boolean, n: number }> = [];
@@ -405,11 +410,12 @@ export class DiceMod {
   }
 
   /**
-   * 
+   * The raw properties for sort, or null if this modifier does not have a sort
+   * clause.
    */
   public get sortProperties(): { ad: 'a' | 'd' } {
     return this._sort === null ? null : {
-      ad: this._sort.ad
+      ad: this._sort.ad,
     };
   }
 
