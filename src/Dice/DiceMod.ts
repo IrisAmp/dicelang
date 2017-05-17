@@ -1,4 +1,5 @@
 import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
+import { shallowCopy } from '../Common/Util';
 import { Dice } from './Dice';
 
 export class DiceMod {
@@ -27,11 +28,11 @@ export class DiceMod {
    * @returns {boolean} True if value "matches" the compare point.
    * @throws {Error} Thrown if cp is not a compare point.
    * @example
-   *  comparePoint('>', 3, 4); // => true
+   *  DiceMod.comparePoint('>', 3, 4); // => true
    * @example
-   *  comparePoint('>', 3, 3); // => true
+   *  DiceMod.comparePoint('>', 3, 3); // => true
    * @example
-   *  comparePoint('>', 3, 2); // => false
+   *  DiceMod.comparePoint('>', 3, 2); // => false
    */
   public static comparePoint(cp: '<' | '>' | '=', n: number, value: number): boolean {
     switch (cp) {
@@ -219,6 +220,21 @@ export class DiceMod {
   }
 
   /**
+   * The raw properties of successes, or null if this modifier does not have a
+   * successes clause.
+   */
+  public get successesProperties(): { cp: '<' | '=' | '>', n: number, f?: { cp: '<' | '=' | '>', n: number } } {
+    return this._successes === null ? null : {
+      cp: this._successes.cp,
+      n: this._successes.n,
+      f: this._failures === null ? null : {
+        cp: this._failures.cp,
+        n: this._failures.n,
+      },
+    };
+  }
+
+  /**
    * The normalized string value for successes.
    */
   public get successes(): string {
@@ -230,6 +246,16 @@ export class DiceMod {
    */
   public get successesPlaintext(): string {
     return this._successes === null ? `` : `Count rolls ${DiceMod.comparePointToString(this._successes.cp)} ${this._successes.n}${this._failures === null ? '' : ` minus rolls ${DiceMod.comparePointToString(this._failures.cp)} ${this._failures.n}`} as successes.`;
+  }
+
+  /**
+   * 
+   */
+  public get explodingProperties(): { cp: '<' | '=' | '>', n: number } {
+    return this._exploding === null ? null : {
+      cp: this._exploding.cp,
+      n: this._exploding.n,
+    };
   }
 
   /**
@@ -256,6 +282,16 @@ export class DiceMod {
   }
 
   /**
+   * 
+   */
+  public get compoundingProperties(): { cp: '<' | '=' | '>', n: number } {
+    return this._compounding === null ? null : {
+      cp: this._compounding.cp,
+      n: this._compounding.n,
+    };
+  }
+
+  /**
    * The normalized string value for compounding.
    */
   public get compounding(): string {
@@ -276,6 +312,16 @@ export class DiceMod {
       explodeOn = `rolls ${DiceMod.comparePointToString(this._compounding.cp)} ${this._compounding.n}`;
     }
     return this._compounding === null ? `` : `Compound on ${explodeOn}.`;
+  }
+
+  /**
+   * 
+   */
+  public get penetratingProperties(): { cp: '<' | '=' | '>', n: number } {
+    return this._penetrating === null ? null : {
+      cp: this._penetrating.cp,
+      n: this._penetrating.n,
+    };
   }
 
   /**
@@ -302,6 +348,17 @@ export class DiceMod {
   }
 
   /**
+   * 
+   */
+  public get keepDropProperties(): { kd: 'k' | 'd', lh: 'l' | 'h', n: number } {
+    return this._keepDrop === null ? null : {
+      kd: this._keepDrop.kd,
+      lh: this._keepDrop.lh,
+      n: this._keepDrop.n,
+    };
+  }
+
+  /**
    * The normalized string value for keepDrop.
    */
   public get keepDrop(): string {
@@ -313,6 +370,19 @@ export class DiceMod {
    */
   public get keepDropPlaintext(): string {
     return this._keepDrop === null ? `` : `${this._keepDrop.kd === 'k' ? 'Keep' : 'Drop'} the ${this._keepDrop.lh === 'l' ? 'lowest' : 'highest'} ${this._keepDrop.n} roll${this._keepDrop.n > 1 ? 's' : ''}.`;
+  }
+
+  /**
+   * 
+   */
+  public get rerollProperties(): Array<{ cp: '<' | '=' | '>', o: boolean, n: number }> {
+    const result: Array<{ cp: '<' | '=' | '>', o: boolean, n: number }> = [];
+    this._reroll.forEach((rr) => result.push({
+      cp: rr.cp,
+      o: rr.o,
+      n: rr.n,
+    }));
+    return result;
   }
 
   /**
@@ -332,6 +402,15 @@ export class DiceMod {
       rerolls[rerolls.length - 1] = `and ${rerolls[rerolls.length - 1]}`;
     }
     return this._reroll.length === 0 ? `` : `Reroll on ${rerolls.join(', ')}.`;
+  }
+
+  /**
+   * 
+   */
+  public get sortProperties(): { ad: 'a' | 'd' } {
+    return this._sort === null ? null : {
+      ad: this._sort.ad
+    };
   }
 
   /**

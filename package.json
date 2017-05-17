@@ -2,6 +2,11 @@
   "name": "dicelang",
   "version": "0.0.0",
   "description": "JavaScript interpreter of the Roll20 dice language",
+  "files": [
+    "dist",
+    "doc",
+    "example"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Brandon Yue",

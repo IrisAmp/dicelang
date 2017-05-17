@@ -1,5 +1,5 @@
 import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
-import { RandomDevice } from '../Common/Random';
+import { IRandomDevice, RandomDevice } from '../Common/Random';
 
 import { DiceMod } from './DiceMod';
 
@@ -29,11 +29,14 @@ export class Dice {
   /**
    * Perform a simple dice roll.
    * @param {number} d The number of faces the dice should have.
-   * @param {number} n The number of dice to roll. Defaults to 1 if not given.
+   * @param {?number} [n=1] The number of dice to roll. Defaults to 1 if not
+   * given.
+   * @param {?IRandomDevice} device The random number generator to use in this
+   * roll.
    * @throws If the value of n is not between 0 and Dice.maxN inclusive.
    * @throws If the value of d is not between 0 and Dice.maxD inclusive.
    */
-  public static roll(d: number, n?: number): number[] {
+  public static roll(d: number, n?: number, device = RD): number[] {
     Dice.checkD(d);
     if (n === undefined) {
       n = 1;
@@ -42,7 +45,7 @@ export class Dice {
 
     const result: number[] = [];
     for (let i = 0; i < n; ++i) {
-      result.push(RD.randomInt(d));
+      result.push(device.randomInt(d));
     }
     return result;
   }
@@ -63,6 +66,7 @@ export class Dice {
     }
   }
 
+  private _device: IRandomDevice;
   private _minRoll: number = 1;
   private _n: number;
   private _d: number;
@@ -79,10 +83,14 @@ export class Dice {
    * from. If not given, the dice is initialized as "1d20".
    * @param {?object} binding An object to bind to if the expression includes
    * bindings.
+   * @param {?IRandomDevice} device The random number generator that this Dice
+   * should use.
    * @throws If the value of n is not between 0 and Dice.maxN inclusive.
    * @throws If the value of d is not between 0 and Dice.maxD inclusive.
    */
-  public constructor(diceExpr?: string, binding?: object) {
+  public constructor(diceExpr?: string, binding?: object, device = RD) {
+    this._device = device;
+
     if (!diceExpr) {
       this._d = 20;
       this._n = 1;
@@ -195,7 +203,7 @@ export class Dice {
   /**
    * Roll the dice. Returns the combined result of the dice roll. Individual
    * rolls are stored in the rolls property.
-   * @param {?number} n The number of dice to roll. If not supplied, defaults to
+   * @param {?number} n The number of dice to roll. If not given, defaults to
    * the value of n given when the dice was constructed.
    * @returns {number} The combined result of the dice roll.
    * @throws If the value of n is not between 0 and Dice.maxN inclusive.
@@ -211,7 +219,7 @@ export class Dice {
     this._rolls.length = 0;
     this._rawRolls.length = 0;
     for (let i = 0; i < n; ++i) {
-      const roll = RD.randomInt(this._d, this._minRoll);
+      const roll = this._device.randomInt(this._d, this._minRoll);
       this._rawRolls.push(roll);
       this._mod.rolled(roll, rolls, this);
     }
