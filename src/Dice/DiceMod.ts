@@ -1,14 +1,15 @@
 import { MAX_JS_INT, MAX_UINT_32 } from '../Common/Constants';
 import { shallowCopy } from '../Common/Util';
 import { Dice } from './Dice';
+import * as Types from './DiceMod.Types';
 
 export class DiceMod {
   /**
-   * @param {'<' | '>' | '='} cp The compare point to translate.
+   * @param {ComparePoint} cp The compare point to translate.
    * @returns {string} The english plaintext representation of the compare point.
    * @throws {Error} If the cp param is not a compare point.
    */
-  public static comparePointToString(cp: '<' | '>' | '='): string {
+  public static comparePointToString(cp: Types.ComparePoint): string {
     switch (cp) {
       case '<':
         return 'less than or equal to';
@@ -22,7 +23,7 @@ export class DiceMod {
   }
 
   /**
-   * @param {'<' | '>' | '='} cp The compare point to use.
+   * @param {ComparePoint} cp The compare point to use.
    * @param {number} n The numeric value of the compare point.
    * @param {number} value The number to compare against the compare point.
    * @returns {boolean} True if value "matches" the compare point.
@@ -34,7 +35,7 @@ export class DiceMod {
    * @example
    *  DiceMod.comparePoint('>', 3, 2); // => false
    */
-  public static comparePoint(cp: '<' | '>' | '=', n: number, value: number): boolean {
+  public static comparePoint(cp: Types.ComparePoint, n: number, value: number): boolean {
     switch (cp) {
       case '<':
         return value <= n;
@@ -111,39 +112,14 @@ export class DiceMod {
     }
   }
 
-  private _successes: {
-    cp: '<' | '=' | '>';
-    n: number;
-  } = null;
-  private _failures: {
-    cp: '<' | '=' | '>';
-    n: number;
-  } = null;
-  private _exploding: {
-    cp: '<' | '=' | '>';
-    n: number;
-  } = null;
-  private _compounding: {
-    cp: '<' | '=' | '>';
-    n: number;
-  } = null;
-  private _penetrating: {
-    cp: '<' | '=' | '>';
-    n: number;
-  } = null;
-  private _keepDrop: {
-    kd: 'k' | 'd';
-    lh: 'l' | 'h';
-    n: number;
-  } = null;
-  private _reroll: Array<{
-    cp: '<' | '=' | '>';
-    o: boolean;
-    n: number;
-  }> = [];
-  private _sort: {
-    ad: 'a' | 'd';
-  } = null;
+  private _successes: Types.ISuccessesProps = null;
+  private _failures: Types.IFailuresProps = null;
+  private _exploding: Types.IExplodingProps = null;
+  private _compounding: Types.ICompoundingProps = null;
+  private _penetrating: Types.IPenetratingProps = null;
+  private _keepDrop: Types.IKeepDropProps = null;
+  private _reroll: Types.IRerollProps[] = [];
+  private _sort: Types.ISortProps = null;
 
   /**
    * @param {string} modExpr The mod expression to create the DiceMod from.
@@ -223,7 +199,7 @@ export class DiceMod {
    * The raw properties of successes, or null if this modifier does not have a
    * successes clause.
    */
-  public get successesProperties(): { cp: '<' | '=' | '>', n: number, f?: { cp: '<' | '=' | '>', n: number } } {
+  public get successesProperties(): Types.ISuccessFailProps {
     return this._successes === null ? null : {
       cp: this._successes.cp,
       n: this._successes.n,
@@ -252,7 +228,7 @@ export class DiceMod {
    * The raw properties for exploding, or null if this modifier does not have an
    * exploding clause.
    */
-  public get explodingProperties(): { cp: '<' | '=' | '>', n: number } {
+  public get explodingProperties(): Types.IExplodingProps {
     return this._exploding === null ? null : {
       cp: this._exploding.cp,
       n: this._exploding.n,
@@ -286,7 +262,7 @@ export class DiceMod {
    * The raw properties for compounding, or null if this modifier does not have
    * a compounding clause.
    */
-  public get compoundingProperties(): { cp: '<' | '=' | '>', n: number } {
+  public get compoundingProperties(): Types.ICompoundingProps {
     return this._compounding === null ? null : {
       cp: this._compounding.cp,
       n: this._compounding.n,
@@ -320,7 +296,7 @@ export class DiceMod {
    * The raw properties for penetrating, or null if this modifier does not have
    * a penetrating clause.
    */
-  public get penetratingProperties(): { cp: '<' | '=' | '>', n: number } {
+  public get penetratingProperties(): Types.IPenetratingProps {
     return this._penetrating === null ? null : {
       cp: this._penetrating.cp,
       n: this._penetrating.n,
@@ -354,7 +330,7 @@ export class DiceMod {
    * The raw properties for keepDrop, or null if this modifier does not have a
    * keepDrop clause.
    */
-  public get keepDropProperties(): { kd: 'k' | 'd', lh: 'l' | 'h', n: number } {
+  public get keepDropProperties(): Types.IKeepDropProps {
     return this._keepDrop === null ? null : {
       kd: this._keepDrop.kd,
       lh: this._keepDrop.lh,
@@ -380,8 +356,8 @@ export class DiceMod {
    * The raw properties for reroll, or null if this modifier does not have a
    * reroll clause.
    */
-  public get rerollProperties(): Array<{ cp: '<' | '=' | '>', o: boolean, n: number }> {
-    const result: Array<{ cp: '<' | '=' | '>', o: boolean, n: number }> = [];
+  public get rerollProperties(): Types.IRerollProps[] {
+    const result: Types.IRerollProps[] = [];
     this._reroll.forEach((rr) => result.push({
       cp: rr.cp,
       o: rr.o,
@@ -413,7 +389,7 @@ export class DiceMod {
    * The raw properties for sort, or null if this modifier does not have a sort
    * clause.
    */
-  public get sortProperties(): { ad: 'a' | 'd' } {
+  public get sortProperties(): Types.ISortProps {
     return this._sort === null ? null : {
       ad: this._sort.ad,
     };
@@ -506,7 +482,7 @@ export class DiceMod {
     const n = result[3] === undefined ? null : parseInt(result[3], 10);
     DiceMod.checkN(n);
     const o = result[1] !== undefined;
-    const cp: any = result[2] === undefined ? '=' : result[2];
+    const cp: Types.ComparePoint = result[2] === undefined ? '=' : result[2] as Types.ComparePoint;
     if (this._reroll.filter((x) => x.cp === cp && x.n === n).length > 0) {
       throw new Error(`Reroll on "${cp}${n}" is already set but parsed "${result[0]}" as well.`);
     }
