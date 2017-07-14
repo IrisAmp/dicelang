@@ -10,23 +10,6 @@ const RD = new RandomDevice();
  */
 export class Dice {
   /**
-   * The maximum allowed value of d, which is equal to the largest representable
-   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
-   */
-  public static get maxD(): number {
-    return MAX_JS_INT;
-  }
-
-  /**
-   * The maximum allowed value of n, which is equal to the largest representable
-   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER in
-   * ES6).
-   */
-  public static get maxN(): number {
-    return MAX_JS_INT;
-  }
-
-  /**
    * Perform a simple dice roll.
    * @param {number} d The number of faces the dice should have.
    * @param {?number} [n=1] The number of dice to roll. Defaults to 1 if not
@@ -48,6 +31,31 @@ export class Dice {
       result.push(device.randomInt(d));
     }
     return result;
+  }
+
+  private static _maxD: number = MAX_JS_INT;
+  /**
+   * The maximum allowed value of d, which is equal to the largest representable
+   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER).
+   */
+  public static get maxD(): number {
+    return Dice._maxD;
+  }
+  public static set maxD(d: number) {
+    Dice._maxD = d;
+  }
+
+  private static _maxN: number = MAX_JS_INT;
+  /**
+   * The maximum allowed value of n, which is equal to the largest representable
+   * integer in JavaScript (9007199254740991, or Number.MAX_SAFE_INTEGER in
+   * ES6).
+   */
+  public static get maxN(): number {
+    return Dice._maxN;
+  }
+  public static set maxN(n: number) {
+    Dice._maxN = n;
   }
 
   /**

@@ -1,7 +1,13 @@
 {
   "name": "dicelang",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "JavaScript interpreter of the Roll20 dice language",
+  "keywords": [
+    "Dice",
+    "PRNG",
+    "Random",
+    "Roll20"
+  ],
   "files": [
     "dist",
     "doc",

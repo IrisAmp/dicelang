@@ -5,7 +5,7 @@ import { IExpression } from '../Common/IExpression';
  * @param {string} input
  * @returns {IExpression}
  */
-export function tokenize(input: string, openParenChar = '(', closeParenChar = ')'): IExpression {
+export function parenthesize(input: string, openParenChar = '(', closeParenChar = ')'): IExpression {
   const result: IExpression = [];
 
   const firstOpenParen = input.indexOf(openParenChar);
@@ -41,12 +41,22 @@ export function tokenize(input: string, openParenChar = '(', closeParenChar = ')
   }
 
   // Recurse into the matched parens.
-  result.push(tokenize(input.slice(firstOpenParen + 1, matchingParen)));
+  result.push(parenthesize(input.slice(firstOpenParen + 1, matchingParen)));
 
   // Process the remaining part of the input
   if (matchingParen < input.length - 1) {
-    result.push(...tokenize(input.slice(matchingParen + 1)));
+    result.push(...parenthesize(input.slice(matchingParen + 1)));
   }
+
+  return result;
+}
+
+/**
+ * Given a string input
+ * @param input
+ */
+export function splitOperators(input: string, operatorMatcher = /[+-*/]/g): IExpression {
+  const result: IExpression = [];
 
   return result;
 }
